@@ -30,7 +30,7 @@ python -m flairbnb.pipeline.sync --stage discover --markets candolim --max-listi
 
 1. Repo secret `MOTHERDUCK_TOKEN`
 2. Optional secret `FLAIRBNB_PROXY_URL`
-3. Workflow [`.github/workflows/sync.yml`](.github/workflows/sync.yml) runs every 6 hours
+3. Workflow [`.github/workflows/sync.yml`](.github/workflows/sync.yml) runs **daily** (03:00 UTC) with parallel enrich
 
 ## Docs
 

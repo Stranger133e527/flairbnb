@@ -2,7 +2,8 @@ name: Sync warehouse
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    # Daily 03:00 UTC (~08:30 IST)
+    - cron: "0 3 * * *"
   workflow_dispatch:
     inputs:
       stage:
@@ -21,9 +22,13 @@ on:
         required: false
         default: all
       max_listings:
-        description: "Optional discover cap per market (0 = no cap)"
+        description: "Discover cap per market (0 = full pagination, slow)"
         required: false
-        default: "0"
+        default: "50"
+      workers:
+        description: "Parallel enrich workers"
+        required: false
+        default: "5"
 
 jobs:
   sync:
@@ -47,14 +52,22 @@ jobs:
           FLAIRBNB_CURRENCY: INR
           FLAIRBNB_LANGUAGE: en
           FLAIRBNB_PROXY_URL: ${{ secrets.FLAIRBNB_PROXY_URL }}
-          SCRAPE_DELAY_MS: "250"
-          SYNC_CALENDAR_REFRESH_LIMIT: "200"
-          SYNC_DETAILS_REFRESH_LIMIT: "50"
-          SYNC_MAX_LISTINGS_PER_MARKET: ${{ github.event.inputs.max_listings || '0' }}
+          SCRAPE_DELAY_MS: "150"
+          # Keep daily runs bounded so they finish in a reasonable time
+          SYNC_MAX_LISTINGS_PER_MARKET: ${{ github.event.inputs.max_listings || '50' }}
+          SYNC_DETAILS_REFRESH_LIMIT: "20"
+          SYNC_CALENDAR_REFRESH_LIMIT: "20"
+          SYNC_ENRICH_WORKERS: ${{ github.event.inputs.workers || '5' }}
         run: |
           STAGE="${{ github.event.inputs.stage || 'all' }}"
           MARKETS="${{ github.event.inputs.markets || 'all' }}"
-          python -m flairbnb.pipeline.sync --stage "$STAGE" --markets "$MARKETS"
+          WORKERS="${{ github.event.inputs.workers || '5' }}"
+          MAX="${{ github.event.inputs.max_listings || '50' }}"
+          python -m flairbnb.pipeline.sync \
+            --stage "$STAGE" \
+            --markets "$MARKETS" \
+            --max-listings "$MAX" \
+            --workers "$WORKERS"
 
       - name: Upload logs on failure
         if: failure()

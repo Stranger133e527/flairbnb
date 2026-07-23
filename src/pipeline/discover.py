@@ -70,7 +70,9 @@ def discover_market(market_id: str, con=None, max_listings: int | None = None) -
 
     rows_written = 0
     try:
-        results = flairbnb.search_all(
+        # Fast path: capped runs use first page only (seconds/market, not minutes).
+        # Full pagination (search_all) only when uncapped — that is the slow path.
+        search_kwargs = dict(
             check_in=check_in,
             check_out=check_out,
             ne_lat=market["ne_lat"],
@@ -85,10 +87,12 @@ def discover_market(market_id: str, con=None, max_listings: int | None = None) -
             proxy_url=proxy,
             timeout=60,
         )
-        scrape_delay()
-
         if cap > 0:
+            results = flairbnb.search_first_page(**search_kwargs)
             results = results[:cap]
+        else:
+            results = flairbnb.search_all(**search_kwargs)
+        scrape_delay()
 
         for raw in results:
             n = _normalize_search_row(raw, market_id, as_of)
@@ -175,11 +179,13 @@ def discover_all(market_ids: list[str] | None = None, con=None) -> dict[str, int
     out: dict[str, int] = {}
     try:
         for mid in ids:
+            print(f"[discover] starting {mid} ...", flush=True)
             try:
                 out[mid] = discover_market(mid, con=con)
+                print(f"[discover] {mid}: {out[mid]} listings", flush=True)
             except Exception as exc:
                 out[mid] = -1
-                print(f"[discover] {mid} failed: {exc}")
+                print(f"[discover] {mid} failed: {exc}", flush=True)
         return out
     finally:
         if own:

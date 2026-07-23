@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 from flairbnb.pipeline.discover import discover_all, discover_market
 from flairbnb.pipeline.enrich import enrich_all, enrich_market
-from flairbnb.pipeline.markets import load_markets
 from flairbnb.pipeline.metrics import compute_metrics
 from flairbnb.pipeline.seed import seed_markets
 from flairbnb.pipeline.util import open_db
@@ -32,6 +32,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Cap listings per market during discover (overrides env)",
     )
+    p.add_argument(
+        "--workers",
+        type=int,
+        default=None,
+        help="Parallel enrich workers (default SYNC_ENRICH_WORKERS or 4)",
+    )
     return p
 
 
@@ -44,6 +50,11 @@ def resolve_markets(raw: str) -> list[str] | None:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     market_ids = resolve_markets(args.markets)
+    if args.max_listings is not None:
+        os.environ["SYNC_MAX_LISTINGS_PER_MARKET"] = str(args.max_listings)
+    if args.workers is not None:
+        os.environ["SYNC_ENRICH_WORKERS"] = str(args.workers)
+
     con = open_db()
     try:
         if args.stage in ("seed", "all"):
@@ -55,21 +66,20 @@ def main(argv: list[str] | None = None) -> int:
                 n = discover_market(market_ids[0], con=con, max_listings=args.max_listings)
                 print(f"discover {market_ids[0]}: {n} listings")
             else:
-                # Apply max_listings via env if provided
-                if args.max_listings is not None:
-                    import os
-
-                    os.environ["SYNC_MAX_LISTINGS_PER_MARKET"] = str(args.max_listings)
                 out = discover_all(market_ids, con=con)
                 print(f"discover: {out}")
 
         if args.stage in ("enrich", "all"):
-            if market_ids and len(market_ids) == 1:
-                out = enrich_market(market_ids[0], con=con)
+            # Parallel enrich opens its own connections; close shared con first
+            con.close()
+            con = None
+            if market_ids and len(market_ids) == 1 and (args.workers or 1) <= 1:
+                out = enrich_market(market_ids[0], con=None)
                 print(f"enrich {market_ids[0]}: {out}")
             else:
-                out = enrich_all(market_ids, con=con)
+                out = enrich_all(market_ids, con=None, workers=args.workers)
                 print(f"enrich: {out}")
+            con = open_db()
 
         if args.stage in ("metrics", "all"):
             n = compute_metrics(con=con)
@@ -80,7 +90,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"sync failed: {exc}", file=sys.stderr)
         return 1
     finally:
-        con.close()
+        if con is not None:
+            con.close()
 
 
 if __name__ == "__main__":

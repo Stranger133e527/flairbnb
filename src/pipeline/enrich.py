@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta
 
 import flairbnb
@@ -335,20 +336,51 @@ def enrich_market(market_id: str, con=None) -> dict[str, int]:
             con.close()
 
 
-def enrich_all(market_ids: list[str] | None = None, con=None) -> dict[str, dict]:
-    own = con is None
-    if own:
-        con = open_db()
+def enrich_all(
+    market_ids: list[str] | None = None,
+    con=None,
+    workers: int | None = None,
+) -> dict[str, dict]:
+    """Enrich markets; use workers>1 to scrape markets in parallel (each gets own DB conn)."""
     ids = market_ids or [m["id"] for m in load_markets()]
-    out: dict[str, dict] = {}
-    try:
-        for mid in ids:
-            try:
-                out[mid] = enrich_market(mid, con=con)
-            except Exception as exc:
-                out[mid] = {"error": str(exc)}
-                print(f"[enrich] {mid} failed: {exc}")
-        return out
-    finally:
+    workers = workers if workers is not None else env_int("SYNC_ENRICH_WORKERS", 4)
+    workers = max(1, min(workers, len(ids) or 1))
+
+    def _one(mid: str) -> tuple[str, dict]:
+        print(f"[enrich] starting {mid} ...", flush=True)
+        try:
+            # Own connection per worker — do not share DuckDB/MotherDuck conns across threads
+            result = enrich_market(mid, con=None)
+            print(f"[enrich] {mid}: {result}", flush=True)
+            return mid, result
+        except Exception as exc:
+            print(f"[enrich] {mid} failed: {exc}", flush=True)
+            return mid, {"error": str(exc)}
+
+    if workers == 1:
+        # Keep optional shared con for sequential path
+        own = con is None
         if own:
-            con.close()
+            con = open_db()
+        out: dict[str, dict] = {}
+        try:
+            for mid in ids:
+                print(f"[enrich] starting {mid} ...", flush=True)
+                try:
+                    out[mid] = enrich_market(mid, con=con)
+                    print(f"[enrich] {mid}: {out[mid]}", flush=True)
+                except Exception as exc:
+                    out[mid] = {"error": str(exc)}
+                    print(f"[enrich] {mid} failed: {exc}", flush=True)
+            return out
+        finally:
+            if own:
+                con.close()
+
+    out: dict[str, dict] = {}
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(_one, mid): mid for mid in ids}
+        for fut in as_completed(futures):
+            mid, result = fut.result()
+            out[mid] = result
+    return out
