@@ -1,8 +1,8 @@
 from curl_cffi import requests
-import pyairbnb.utils as utils
+import flairbnb.utils as utils
 from urllib.parse import urlencode
 import json
-from pyairbnb.utils import DEFAULT_TIMEOUT, Timeout
+from flairbnb.utils import DEFAULT_TIMEOUT, Timeout
 
 ep="https://www.airbnb.com/api/v3/StaysPdpReviewsQuery/dec1c8061483e78373602047450322fd474e79ba9afa8d3dbbc27f504030f91d/"
 

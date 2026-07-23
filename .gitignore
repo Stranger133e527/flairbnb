@@ -28,3 +28,8 @@ reviews.json
 calendar.json
 listings.json
 experiences.json
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/

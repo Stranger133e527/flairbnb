@@ -1,14 +1,14 @@
-import pyairbnb.details as details
-import pyairbnb.reviews as reviews
-import pyairbnb.price as price
-import pyairbnb.api as api
-import pyairbnb.search as search
-import pyairbnb.utils as utils
-import pyairbnb.standardize as standardize
-import pyairbnb.experience as experience
-import pyairbnb.calendarinfo as calendar
-import pyairbnb.host_details as host_details
-from pyairbnb.utils import DEFAULT_TIMEOUT, Timeout
+import flairbnb.details as details
+import flairbnb.reviews as reviews
+import flairbnb.price as price
+import flairbnb.api as api
+import flairbnb.search as search
+import flairbnb.utils as utils
+import flairbnb.standardize as standardize
+import flairbnb.experience as experience
+import flairbnb.calendarinfo as calendar
+import flairbnb.host_details as host_details
+from flairbnb.utils import DEFAULT_TIMEOUT, Timeout
 from datetime import datetime
 from urllib.parse import urlparse
 

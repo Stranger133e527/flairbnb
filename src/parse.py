@@ -1,8 +1,8 @@
 import re
 import json
 from bs4 import BeautifulSoup
-import pyairbnb.standardize as standardize
-import pyairbnb.utils as utils
+import flairbnb.standardize as standardize
+import flairbnb.utils as utils
 
 regxApiKey = re.compile(r'"key":".+?"')
 regexLanguage = re.compile(r'"language":".+?"')

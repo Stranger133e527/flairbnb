@@ -1,5 +1,5 @@
 import re
-import pyairbnb.utils as utils
+import flairbnb.utils as utils
 import base64
 
 regex_number =  re.compile(r'\d+')

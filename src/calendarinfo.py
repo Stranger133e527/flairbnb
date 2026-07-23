@@ -1,8 +1,8 @@
 from curl_cffi import requests
-import pyairbnb.utils as utils
+import flairbnb.utils as utils
 from urllib.parse import urlencode
 import json
-from pyairbnb.utils import DEFAULT_TIMEOUT, Timeout
+from flairbnb.utils import DEFAULT_TIMEOUT, Timeout
 
 ep = "https://www.airbnb.com/api/v3/PdpAvailabilityCalendar/8f08e03c7bd16fcad3c92a3592c19a8b559a0d0855a84028d1163d4733ed9ade/"
  

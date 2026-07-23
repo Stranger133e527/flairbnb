@@ -1,11 +1,11 @@
 from datetime import date
 import json
 from curl_cffi import requests
-import pyairbnb.utils as utils
+import flairbnb.utils as utils
 from urllib.parse import urlencode
-import pyairbnb.api as api
-import pyairbnb.standardize as standardize
-from pyairbnb.utils import DEFAULT_TIMEOUT, Timeout
+import flairbnb.api as api
+import flairbnb.standardize as standardize
+from flairbnb.utils import DEFAULT_TIMEOUT, Timeout
 
 
 class UnavailableError(Exception):

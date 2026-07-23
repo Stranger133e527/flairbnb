@@ -1,7 +1,7 @@
 from curl_cffi import requests
 import json
 import base64
-from pyairbnb.utils import DEFAULT_TIMEOUT, Timeout
+from flairbnb.utils import DEFAULT_TIMEOUT, Timeout
 
 def get(api_key: str, cookies, host_id: str, language: str, proxy_url: str, timeout: Timeout = DEFAULT_TIMEOUT):
     # Encode the host ID to match Airbnb's required format

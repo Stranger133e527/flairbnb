@@ -1,6 +1,6 @@
 from curl_cffi import requests
 import re
-from pyairbnb.utils import DEFAULT_TIMEOUT, Timeout
+from flairbnb.utils import DEFAULT_TIMEOUT, Timeout
 
 ep = "https://www.airbnb.com"
 

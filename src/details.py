@@ -1,6 +1,6 @@
 from curl_cffi import requests
-import pyairbnb.parse as parse
-from pyairbnb.utils import DEFAULT_TIMEOUT, Timeout
+import flairbnb.parse as parse
+from flairbnb.utils import DEFAULT_TIMEOUT, Timeout
 
 
 
