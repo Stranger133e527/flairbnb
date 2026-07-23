@@ -103,32 +103,26 @@ def _compute_market(con, market_id: str, as_of: date) -> int:
     ).fetchone()
     adr, adr_p25, adr_p50, adr_p75 = adr_row
 
-    # Occupancy estimate: prefer past calendar nights; fall back to forward 90d blocked share
-    # (Airbnb calendar API is forward-looking, so early runs use forward proxy)
+    # Occupancy from historical night resolution (source of truth once daily scrapes accumulate).
+    # Fallback: forward calendar blocked share only when no past history exists yet.
     occ_row = con.execute(
         """
-        WITH past AS (
-          SELECT c.room_id, c.night, c.available
-          FROM calendars c
-          JOIN listing_markets lm ON c.room_id = lm.room_id
+        WITH hist AS (
+          SELECT h.room_id, h.night, h.status
+          FROM listing_night_history h
+          JOIN listing_markets lm ON h.room_id = lm.room_id
           WHERE lm.market_id = ?
-            AND c.night >= current_date - INTERVAL '365 days'
-            AND c.night < current_date
+            AND h.night >= ? - INTERVAL '365 days'
+            AND h.night < ?
+            AND h.status IN ('occupied_inferred', 'vacant')
         ),
-        past_per AS (
-          SELECT room_id,
-                 COUNT(*) AS observed,
-                 SUM(CASE WHEN available = FALSE THEN 1 ELSE 0 END) AS unavailable
-          FROM past
-          GROUP BY room_id
-          HAVING COUNT(*) >= 30
-        ),
-        past_agg AS (
+        hist_agg AS (
           SELECT
-            CASE WHEN SUM(observed) > 0
-                 THEN SUM(unavailable) * 1.0 / SUM(observed) END AS occupancy_est,
-            COALESCE(MAX(observed), 0) AS max_obs
-          FROM past_per
+            CASE WHEN COUNT(*) > 0
+                 THEN COUNT(*) FILTER (WHERE status = 'occupied_inferred') * 1.0 / COUNT(*)
+            END AS occupancy_est,
+            COUNT(DISTINCT night) AS window_days
+          FROM hist
         ),
         forward AS (
           SELECT
@@ -138,21 +132,21 @@ def _compute_market(con, market_id: str, as_of: date) -> int:
           JOIN listing_markets lm ON c.room_id = lm.room_id
           WHERE lm.market_id = ?
             AND c.night >= current_date
-            AND c.night < current_date + INTERVAL '90 days'
+            AND c.night < current_date + INTERVAL '30 days'
         )
         SELECT
-          COALESCE((SELECT occupancy_est FROM past_agg), (SELECT blocked_pct FROM forward)) AS occupancy_est,
+          COALESCE((SELECT occupancy_est FROM hist_agg), (SELECT blocked_pct FROM forward)) AS occupancy_est,
           CASE
-            WHEN (SELECT occupancy_est FROM past_agg) IS NOT NULL THEN (SELECT max_obs FROM past_agg)
-            ELSE LEAST(90, COALESCE((SELECT fwd_nights FROM forward), 0))
+            WHEN (SELECT occupancy_est FROM hist_agg) IS NOT NULL THEN (SELECT window_days FROM hist_agg)
+            ELSE LEAST(30, COALESCE((SELECT fwd_nights FROM forward), 0))
           END AS window_days,
-          CASE WHEN (SELECT occupancy_est FROM past_agg) IS NULL THEN TRUE ELSE FALSE END AS used_forward
+          CASE WHEN (SELECT occupancy_est FROM hist_agg) IS NULL THEN TRUE ELSE FALSE END AS used_forward
         """,
-        [market_id, market_id],
+        [market_id, as_of, as_of, market_id],
     ).fetchone()
     occupancy_est, window_days, used_forward = occ_row
     window_days = int(window_days or 0)
-    is_partial = bool(used_forward) or window_days < 365
+    is_partial = bool(used_forward) or window_days < 30
 
     revpar = (adr * occupancy_est) if adr is not None and occupancy_est is not None else None
     revenue_mo = (adr * occupancy_est * 30) if adr is not None and occupancy_est is not None else None

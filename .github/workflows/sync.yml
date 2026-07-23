@@ -57,6 +57,7 @@ jobs:
           SYNC_MAX_LISTINGS_PER_MARKET: ${{ github.event.inputs.max_listings || '50' }}
           SYNC_DETAILS_REFRESH_LIMIT: "20"
           SYNC_CALENDAR_REFRESH_LIMIT: "20"
+          SYNC_CALENDAR_MONTHS: "1"
           SYNC_ENRICH_WORKERS: ${{ github.event.inputs.workers || '5' }}
         run: |
           STAGE="${{ github.event.inputs.stage || 'all' }}"

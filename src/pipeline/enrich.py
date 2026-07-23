@@ -8,6 +8,7 @@ from datetime import date, datetime, timedelta
 
 import flairbnb
 from flairbnb.pipeline.bulk import bulk_replace_calendars
+from flairbnb.pipeline.occupancy import process_daily_calendar_history
 from flairbnb.pipeline.markets import load_markets
 from flairbnb.pipeline.util import (
     env_int,
@@ -216,7 +217,8 @@ def enrich_market(market_id: str, con=None) -> dict[str, int]:
                 print(f"[enrich:details] {room_id}: {exc}")
             scrape_delay()
 
-        # Calendars: scrape many listings, flush once to MotherDuck (bulk)
+        # Calendars: scrape ~1 forward month, bulk-write latest + daily observations/history
+        months_count = env_int("SYNC_CALENDAR_MONTHS", 1)
         cal_targets = con.execute(
             """
             SELECT l.room_id
@@ -246,6 +248,7 @@ def enrich_market(market_id: str, con=None) -> dict[str, int]:
                     room_id=str(room_id),
                     proxy_url=proxy,
                     timeout=30,
+                    months_count=months_count,
                 )
                 nights = _parse_calendar_months(months if isinstance(months, list) else [])
                 for n in nights:
@@ -264,10 +267,13 @@ def enrich_market(market_id: str, con=None) -> dict[str, int]:
             scrape_delay()
 
         if cal_buffer:
+            # Latest forward snapshot (for UI / forward demand)
             calendar_n = bulk_replace_calendars(con, cal_buffer)
+            # Daily history: observations + available→unavailable flips + resolved past nights
+            hist = process_daily_calendar_history(con, cal_buffer)
             print(
-                f"[enrich:calendar] {market_id}: bulk wrote {calendar_n} nights "
-                f"for {len({r['room_id'] for r in cal_buffer})} listings",
+                f"[enrich:calendar] {market_id}: bulk {calendar_n} nights | "
+                f"obs={hist['observations']} flips={hist['flips']} history={hist['history_rows']}",
                 flush=True,
             )
 

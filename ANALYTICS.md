@@ -42,11 +42,17 @@ How market KPIs are calculated. Frontend should read MotherDuck views and show `
 - `v_listing_calendar_forward` — listing nights next 90 days
 - `v_properties_for_sale` — Tier C sales + STR estimate join
 
-## Occupancy honesty
+## Occupancy (source of truth)
 
-Airbnb calendars do **not** separate booked vs host-blocked, and the public calendar API is mostly **forward-looking**.
+We scrape **~1 forward month** daily (not a full year).
 
-- When past nights exist in `calendars`: `occupancy_est` = unavailable ÷ observed (trailing up to 365d)
-- Otherwise (typical early syncs): fall back to **forward 90-day blocked share** and set `is_partial = true`
+1. Each day store `calendar_observations` (room_id, night, as_of, available)
+2. If a night flips **available → unavailable** vs the previous scrape → `occupancy_events.became_unavailable` → status **`occupied_inferred`**
+3. When that night becomes past:
+   - `occupied_inferred` = counted occupied
+   - still `available` when the night passed = `vacant`
+   - never saw open = `always_blocked` (excluded from primary occupancy)
+4. Until enough past history exists, KPIs fall back to forward 30d blocked share and set `is_partial=true`
 
-We publish `occupancy_method = calendar_unavailable_share` and never claim true booked occupancy.
+Primary occupancy:
+`occupied_inferred / (occupied_inferred + vacant)` over past nights in window.

@@ -12,24 +12,26 @@ from flairbnb.utils import DEFAULT_TIMEOUT, Timeout
 from datetime import datetime
 from urllib.parse import urlparse
 
-def get_calendar(api_key: str = "", room_id: str = "", proxy_url: str = "", timeout: Timeout = DEFAULT_TIMEOUT):
+def get_calendar(api_key: str = "", room_id: str = "", proxy_url: str = "", timeout: Timeout = DEFAULT_TIMEOUT, months_count: int = 1):
     """
-    Retrieves the calendar data for a specified room.
+    Retrieves calendar data for a room.
 
-    Args:
-        room_id (str): The room ID.
-        api_key (str): The API key.
-        proxy_url (str): The proxy URL.
-
-    Returns:
-        dict: Calendar data.
+    Default months_count=1 (forward ~one month). Pass 12 for a full year.
     """
     if not api_key:
         api_key = api.get(proxy_url, timeout=timeout)
 
     current_month = datetime.now().month
     current_year = datetime.now().year
-    return calendar.get(api_key, room_id, current_month, current_year, proxy_url, timeout=timeout)
+    return calendar.get(
+        api_key,
+        room_id,
+        current_month,
+        current_year,
+        proxy_url,
+        timeout=timeout,
+        months_count=months_count,
+    )
 
 def get_reviews(room_url: str ,language: str = "en", proxy_url: str = "", timeout: Timeout = DEFAULT_TIMEOUT):
     """

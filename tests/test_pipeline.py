@@ -64,10 +64,22 @@ def test_seed_and_metrics_local(tmp_path, monkeypatch):
     )
     for i in range(40):
         night = date.today() - timedelta(days=i + 1)
+        status = "occupied_inferred" if i % 3 != 0 else "vacant"
         con.execute(
-            "INSERT INTO calendars VALUES (1, ?, ?, NULL, NULL, ?)",
-            [night, i % 3 != 0, as_of],  # ~2/3 unavailable
+            """
+            INSERT INTO listing_night_history (
+              room_id, night, status, became_unavailable_on, last_available, observation_count, updated_at
+            ) VALUES (1, ?, ?, ?, ?, 2, ?)
+            """,
+            [night, status, night if status == "occupied_inferred" else None, status == "vacant", as_of],
         )
+        # also keep a bit of forward calendar for fallback paths
+        if i < 5:
+            fwd = date.today() + timedelta(days=i + 1)
+            con.execute(
+                "INSERT INTO calendars VALUES (1, ?, ?, NULL, NULL, ?)",
+                [fwd, i % 2 == 0, as_of],
+            )
 
     rows = compute_metrics(con=con)
     assert rows == 20

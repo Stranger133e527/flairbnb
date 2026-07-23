@@ -60,7 +60,7 @@ SELECT
   k.intl_guest_pct,
   k.window_days,
   k.is_partial,
-  'calendar_unavailable_share' AS occupancy_method,
+  'occupied_inferred_over_vacant' AS occupancy_method,
   'quotes_then_search' AS adr_method,
   'manual_seed' AS regulation_source
 FROM markets m
