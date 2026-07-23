@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta
 
 import flairbnb
+from flairbnb.pipeline.bulk import bulk_replace_calendars
 from flairbnb.pipeline.markets import load_markets
 from flairbnb.pipeline.util import (
     env_int,
@@ -215,7 +216,7 @@ def enrich_market(market_id: str, con=None) -> dict[str, int]:
                 print(f"[enrich:details] {room_id}: {exc}")
             scrape_delay()
 
-        # Calendars for stale listings
+        # Calendars: scrape many listings, flush once to MotherDuck (bulk)
         cal_targets = con.execute(
             """
             SELECT l.room_id
@@ -230,39 +231,45 @@ def enrich_market(market_id: str, con=None) -> dict[str, int]:
             [market_id, cal_limit],
         ).fetchall()
 
+        api_key = ""
+        if cal_targets:
+            try:
+                api_key = flairbnb.get_api_key(proxy)
+            except Exception as exc:
+                print(f"[enrich:calendar] api_key failed: {exc}")
+
+        cal_buffer: list[dict] = []
         for (room_id,) in cal_targets:
             try:
-                months = flairbnb.get_calendar(room_id=str(room_id), proxy_url=proxy, timeout=60)
-                nights = _parse_calendar_months(months if isinstance(months, list) else [])
-                scraped_at = _utcnow()
-                for n in nights:
-                    con.execute(
-                        """
-                        INSERT INTO calendars (room_id, night, available, price, currency, scraped_at)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                        ON CONFLICT (room_id, night) DO UPDATE SET
-                          available = excluded.available,
-                          price = COALESCE(excluded.price, calendars.price),
-                          currency = COALESCE(excluded.currency, calendars.currency),
-                          scraped_at = excluded.scraped_at
-                        """,
-                        [
-                            int(room_id),
-                            n["night"],
-                            n["available"],
-                            n["price"],
-                            n["currency"],
-                            n["scraped_at"],
-                        ],
-                    )
-                    calendar_n += 1
-                con.execute(
-                    "UPDATE listings SET calendar_scraped_at = ? WHERE room_id = ?",
-                    [scraped_at, int(room_id)],
+                months = flairbnb.get_calendar(
+                    api_key=api_key,
+                    room_id=str(room_id),
+                    proxy_url=proxy,
+                    timeout=30,
                 )
+                nights = _parse_calendar_months(months if isinstance(months, list) else [])
+                for n in nights:
+                    cal_buffer.append(
+                        {
+                            "room_id": int(room_id),
+                            "night": n["night"],
+                            "available": n["available"],
+                            "price": n["price"],
+                            "currency": n["currency"],
+                            "scraped_at": n["scraped_at"],
+                        }
+                    )
             except Exception as exc:
                 print(f"[enrich:calendar] {room_id}: {exc}")
             scrape_delay()
+
+        if cal_buffer:
+            calendar_n = bulk_replace_calendars(con, cal_buffer)
+            print(
+                f"[enrich:calendar] {market_id}: bulk wrote {calendar_n} nights "
+                f"for {len({r['room_id'] for r in cal_buffer})} listings",
+                flush=True,
+            )
 
         # Optional: one price quote sample for a few listings
         quote_limit = min(10, details_limit)
