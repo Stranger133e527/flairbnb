@@ -468,4 +468,83 @@ def _compute_market(con, market_id: str, as_of: date) -> int:
         [as_of, market_id, score, occ_c, adr_c, rev_c, penalty],
     )
 
+    # New listing velocity
+    vel = con.execute(
+        """
+        SELECT
+          COUNT(*) FILTER (WHERE l.first_seen >= current_timestamp - INTERVAL '7 days'),
+          COUNT(*) FILTER (WHERE l.first_seen >= current_timestamp - INTERVAL '30 days'),
+          COUNT(*) FILTER (WHERE l.last_seen >= current_timestamp - INTERVAL '14 days')
+        FROM listings l
+        JOIN listing_markets lm ON l.room_id = lm.room_id
+        WHERE lm.market_id = ?
+        """,
+        [market_id],
+    ).fetchone()
+    con.execute(
+        """
+        INSERT INTO market_listing_velocity (as_of, market_id, new_listings_7d, new_listings_30d, active_live)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT (as_of, market_id) DO UPDATE SET
+          new_listings_7d = excluded.new_listings_7d,
+          new_listings_30d = excluded.new_listings_30d,
+          active_live = excluded.active_live
+        """,
+        [as_of, market_id, vel[0], vel[1], vel[2]],
+    )
+
+    # Amenity premiums from search badges / details amenities_json (best-effort keyword match)
+    for amenity, needle in (
+        ("pool", "pool"),
+        ("wifi", "wifi"),
+        ("parking", "parking"),
+        ("ac", "air conditioning"),
+    ):
+        row = con.execute(
+            """
+            WITH base AS (
+              SELECT l.room_id,
+                     COALESCE(s.search_price, 0) AS price,
+                     CASE
+                       WHEN lower(COALESCE(d.amenities_json, '')) LIKE ?
+                         OR lower(COALESCE(s.badges, '')) LIKE ?
+                       THEN TRUE ELSE FALSE
+                     END AS has_amenity
+              FROM listings l
+              JOIN listing_markets lm ON l.room_id = lm.room_id
+              LEFT JOIN listing_details d ON l.room_id = d.room_id
+              LEFT JOIN (
+                SELECT room_id, search_price, badges,
+                       ROW_NUMBER() OVER (PARTITION BY room_id ORDER BY as_of DESC) AS rn
+                FROM listing_search_snapshots WHERE market_id = ?
+              ) s ON l.room_id = s.room_id AND s.rn = 1
+              WHERE lm.market_id = ?
+                AND l.last_seen >= current_timestamp - INTERVAL '14 days'
+            )
+            SELECT
+              COUNT(*) FILTER (WHERE has_amenity) AS n_with,
+              AVG(price) FILTER (WHERE has_amenity AND price > 0) AS adr_with,
+              AVG(price) FILTER (WHERE NOT has_amenity AND price > 0) AS adr_without
+            FROM base
+            """,
+            [f"%{needle}%", f"%{needle}%", market_id, market_id],
+        ).fetchone()
+        n_with, adr_with, adr_without = row
+        lift = None
+        if adr_with is not None and adr_without not in (None, 0):
+            lift = (adr_with - adr_without) / adr_without
+        con.execute(
+            """
+            INSERT INTO amenity_premiums (
+              as_of, market_id, amenity, listings_with, adr_with, adr_without, adr_lift
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (as_of, market_id, amenity) DO UPDATE SET
+              listings_with = excluded.listings_with,
+              adr_with = excluded.adr_with,
+              adr_without = excluded.adr_without,
+              adr_lift = excluded.adr_lift
+            """,
+            [as_of, market_id, amenity, n_with, adr_with, adr_without, lift],
+        )
+
     return 1

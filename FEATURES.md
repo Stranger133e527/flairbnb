@@ -32,8 +32,9 @@
 - Tier C stubs: property price, LTR rent, yield, rent gap, properties for sale
 - GitHub Actions cron every 6 hours (`flairbnb-sync`)
 
-## Frontend reads (no API)
+## HTTP API (no frontend)
 
-Query MotherDuck views: `v_market_kpis`, `v_market_kpis_2bd`, `v_listing_latest`, `v_market_seasonality`, `v_market_forward_90d`, `v_market_scores`, `v_host_concentration`, `v_market_events`, `sync_runs`.
-
-See [ANALYTICS.md](ANALYTICS.md) for formulas.
+- FastAPI read layer over MotherDuck (`flairbnb-api`, see [API.md](API.md))
+- Market KPIs, listings, calendars, occupancy history, events, sync runs
+- Ops: `POST /v1/sync/run` to queue pipeline stages
+- Invest/Tier C endpoints return NULLs until external feeds

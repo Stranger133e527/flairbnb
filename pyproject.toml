@@ -1,7 +1,7 @@
 [project]
 name = "flairbnb"
-version = "0.1.0"
-description = "Flairbnb backend — India STR analytics warehouse (Airbnb scrape → MotherDuck)"
+version = "0.2.0"
+description = "Flairbnb backend — India STR analytics warehouse + HTTP API (Airbnb scrape → MotherDuck)"
 requires-python = ">=3.10"
 dependencies = [
   "curl_cffi",
@@ -10,21 +10,28 @@ dependencies = [
   "duckdb==1.5.4",
   "python-dotenv>=1.0.0",
   "pyyaml>=6.0",
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.30.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "httpx>=0.27.0"]
 
 [project.scripts]
 flairbnb-sync = "flairbnb.pipeline.sync:main"
+flairbnb-api = "flairbnb.webapi.app:run"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["flairbnb", "flairbnb.pipeline"]
-package-dir = {"flairbnb" = "src", "flairbnb.pipeline" = "src/pipeline"}
+packages = ["flairbnb", "flairbnb.pipeline", "flairbnb.webapi"]
+
+[tool.setuptools.package-dir]
+flairbnb = "src"
+"flairbnb.pipeline" = "src/pipeline"
+"flairbnb.webapi" = "src/webapi"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

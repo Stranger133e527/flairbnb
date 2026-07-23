@@ -58,6 +58,11 @@ def migrate(con: duckdb.DuckDBPyConnection | None = None) -> duckdb.DuckDBPyConn
     own = con is None
     if own:
         con = connect()
-    for name in ("001_init.sql", "002_views.sql", "003_calendar_history.sql"):
+    for name in (
+        "001_init.sql",
+        "002_views.sql",
+        "003_calendar_history.sql",
+        "004_p1_analytics.sql",
+    ):
         run_sql_file(con, _SQL_DIR / name)
     return con

@@ -26,11 +26,14 @@ python -m flairbnb.pipeline.sync --stage all
 python -m flairbnb.pipeline.sync --stage discover --markets candolim --max-listings 50
 ```
 
-## GitHub Actions
+## HTTP API
 
-1. Repo secret `MOTHERDUCK_TOKEN`
-2. Optional secret `FLAIRBNB_PROXY_URL`
-3. Workflow [`.github/workflows/sync.yml`](.github/workflows/sync.yml) runs **daily** (03:00 UTC) with parallel enrich
+```bash
+flairbnb-api
+# docs: http://127.0.0.1:8000/docs
+```
+
+See [API.md](API.md) for endpoints. Frontend is separate; this API reads MotherDuck.
 
 ## Docs
 
