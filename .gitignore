@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Tooling / IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Local secrets / scrape dumps
+.env
+.env.*
+search_results.json
+*_data.json
+reviews.json
+calendar.json
+listings.json
+experiences.json
