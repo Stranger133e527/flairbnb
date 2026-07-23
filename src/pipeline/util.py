@@ -72,10 +72,11 @@ def finish_sync_run(
     )
 
 
-def open_db():
+def open_db(*, run_migrate: bool = True):
     load_env()
     con = connect()
-    migrate(con)
+    if run_migrate:
+        migrate(con)
     return con
 
 

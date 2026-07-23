@@ -349,19 +349,26 @@ def enrich_all(
     def _one(mid: str) -> tuple[str, dict]:
         print(f"[enrich] starting {mid} ...", flush=True)
         try:
-            # Own connection per worker — do not share DuckDB/MotherDuck conns across threads
-            result = enrich_market(mid, con=None)
+            # Own connection per worker; skip migrate to avoid MotherDuck catalog conflicts
+            wcon = open_db(run_migrate=False)
+            try:
+                result = enrich_market(mid, con=wcon)
+            finally:
+                wcon.close()
             print(f"[enrich] {mid}: {result}", flush=True)
             return mid, result
         except Exception as exc:
             print(f"[enrich] {mid} failed: {exc}", flush=True)
             return mid, {"error": str(exc)}
 
+    # Migrate once before parallel work
+    bootstrap = open_db(run_migrate=True)
+    bootstrap.close()
+
     if workers == 1:
-        # Keep optional shared con for sequential path
         own = con is None
         if own:
-            con = open_db()
+            con = open_db(run_migrate=False)
         out: dict[str, dict] = {}
         try:
             for mid in ids:
