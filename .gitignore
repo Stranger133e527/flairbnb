@@ -21,7 +21,7 @@ env/
 
 # Local secrets / scrape dumps
 .env
-.env.*
+!.env.example
 search_results.json
 *_data.json
 reviews.json
@@ -33,3 +33,8 @@ experiences.json
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Local warehouse
+data/
+*.duckdb
+*.duckdb.wal

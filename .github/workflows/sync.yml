@@ -1,0 +1,67 @@
+name: Sync warehouse
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Pipeline stage"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - seed
+          - discover
+          - enrich
+          - metrics
+      markets:
+        description: "Market ids (comma-separated) or all"
+        required: false
+        default: all
+      max_listings:
+        description: "Optional discover cap per market (0 = no cap)"
+        required: false
+        default: "0"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Sync
+        env:
+          motherduck_token: ${{ secrets.MOTHERDUCK_TOKEN }}
+          MOTHERDUCK_DATABASE: flairbnb
+          FLAIRBNB_CURRENCY: INR
+          FLAIRBNB_LANGUAGE: en
+          FLAIRBNB_PROXY_URL: ${{ secrets.FLAIRBNB_PROXY_URL }}
+          SCRAPE_DELAY_MS: "250"
+          SYNC_CALENDAR_REFRESH_LIMIT: "200"
+          SYNC_DETAILS_REFRESH_LIMIT: "50"
+          SYNC_MAX_LISTINGS_PER_MARKET: ${{ github.event.inputs.max_listings || '0' }}
+        run: |
+          STAGE="${{ github.event.inputs.stage || 'all' }}"
+          MARKETS="${{ github.event.inputs.markets || 'all' }}"
+          python -m flairbnb.pipeline.sync --stage "$STAGE" --markets "$MARKETS"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-failure-logs
+          path: |
+            *.log
+            data/
+          if-no-files-found: ignore

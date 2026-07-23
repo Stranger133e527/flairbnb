@@ -1,24 +1,30 @@
 [project]
 name = "flairbnb"
 version = "0.1.0"
-description = "Flairbnb backend — Airbnb listing search, details, prices, and reviews"
+description = "Flairbnb backend — India STR analytics warehouse (Airbnb scrape → MotherDuck)"
 requires-python = ">=3.10"
 dependencies = [
   "curl_cffi",
   "bs4",
   "requests",
+  "duckdb==1.5.4",
+  "python-dotenv>=1.0.0",
+  "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+
+[project.scripts]
+flairbnb-sync = "flairbnb.pipeline.sync:main"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["flairbnb"]
-package-dir = {"flairbnb" = "src"}
+packages = ["flairbnb", "flairbnb.pipeline"]
+package-dir = {"flairbnb" = "src", "flairbnb.pipeline" = "src/pipeline"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

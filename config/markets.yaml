@@ -1,0 +1,204 @@
+# India top-20 STR markets for Flairbnb warehouse sync.
+# Bboxes are approximate city/area bounds for Airbnb map search.
+# regulation: Low | Moderate | High (manual seed)
+
+markets:
+  - id: bengaluru
+    name: Bengaluru, Karnataka
+    state: Karnataka
+    regulation: Low
+    ne_lat: 13.1392
+    ne_lng: 77.7500
+    sw_lat: 12.8342
+    sw_lng: 77.4601
+    zoom: 11
+
+  - id: mumbai
+    name: Mumbai, Maharashtra
+    state: Maharashtra
+    regulation: Low
+    ne_lat: 19.2700
+    ne_lng: 72.9800
+    sw_lat: 18.8900
+    sw_lng: 72.7700
+    zoom: 11
+
+  - id: new_delhi
+    name: New Delhi, Delhi
+    state: Delhi
+    regulation: Low
+    ne_lat: 28.8800
+    ne_lng: 77.3500
+    sw_lat: 28.4000
+    sw_lng: 76.8400
+    zoom: 11
+
+  - id: hyderabad
+    name: Hyderabad, Telangana
+    state: Telangana
+    regulation: Low
+    ne_lat: 17.5500
+    ne_lng: 78.6000
+    sw_lat: 17.2400
+    sw_lng: 78.2400
+    zoom: 11
+
+  - id: gurugram
+    name: Gurugram, Haryana
+    state: Haryana
+    regulation: Low
+    ne_lat: 28.5200
+    ne_lng: 77.1200
+    sw_lat: 28.3500
+    sw_lng: 76.9000
+    zoom: 12
+
+  - id: bangalore_urban
+    name: Bangalore Urban, Karnataka
+    state: Karnataka
+    regulation: Low
+    ne_lat: 13.2000
+    ne_lng: 77.8500
+    sw_lat: 12.7000
+    sw_lng: 77.3000
+    zoom: 10
+
+  - id: chennai
+    name: Chennai, Tamil Nadu
+    state: Tamil Nadu
+    regulation: Low
+    ne_lat: 13.2000
+    ne_lng: 80.3200
+    sw_lat: 12.8500
+    sw_lng: 80.1000
+    zoom: 11
+
+  - id: varanasi
+    name: Varanasi, Uttar Pradesh
+    state: Uttar Pradesh
+    regulation: Low
+    ne_lat: 25.3800
+    ne_lng: 83.0500
+    sw_lat: 25.2500
+    sw_lng: 82.9200
+    zoom: 13
+
+  - id: candolim
+    name: Candolim, Goa
+    state: Goa
+    regulation: High
+    ne_lat: 15.5300
+    ne_lng: 73.7800
+    sw_lat: 15.5000
+    sw_lng: 73.7500
+    zoom: 14
+
+  - id: jaipur_municipal
+    name: Jaipur Municipal Corporation, Rajasthan
+    state: Rajasthan
+    regulation: Low
+    ne_lat: 26.9800
+    ne_lng: 75.9000
+    sw_lat: 26.8000
+    sw_lng: 75.7000
+    zoom: 12
+
+  - id: pune
+    name: Pune, Maharashtra
+    state: Maharashtra
+    regulation: Low
+    ne_lat: 18.6500
+    ne_lng: 73.9800
+    sw_lat: 18.4000
+    sw_lng: 73.7000
+    zoom: 11
+
+  - id: kolkata
+    name: Kolkata, West Bengal
+    state: West Bengal
+    regulation: Low
+    ne_lat: 22.6500
+    ne_lng: 88.4500
+    sw_lat: 22.4500
+    sw_lng: 88.2500
+    zoom: 12
+
+  - id: jaipur
+    name: Jaipur, Rajasthan
+    state: Rajasthan
+    regulation: Low
+    ne_lat: 27.0500
+    ne_lng: 76.0000
+    sw_lat: 26.7500
+    sw_lng: 75.6000
+    zoom: 11
+
+  - id: dehradun
+    name: Dehradun, Uttarakhand
+    state: Uttarakhand
+    regulation: Low
+    ne_lat: 30.4000
+    ne_lng: 78.1200
+    sw_lat: 30.2500
+    sw_lng: 77.9500
+    zoom: 12
+
+  - id: udaipur
+    name: Udaipur, Rajasthan
+    state: Rajasthan
+    regulation: Low
+    ne_lat: 24.6500
+    ne_lng: 73.7800
+    sw_lat: 24.5200
+    sw_lng: 73.6200
+    zoom: 12
+
+  - id: guwahati
+    name: Guwahati, Assam
+    state: Assam
+    regulation: Low
+    ne_lat: 26.2200
+    ne_lng: 91.8500
+    sw_lat: 26.0800
+    sw_lng: 91.6500
+    zoom: 12
+
+  - id: puducherry
+    name: Puducherry, Puducherry
+    state: Puducherry
+    regulation: Low
+    ne_lat: 11.9800
+    ne_lng: 79.8600
+    sw_lat: 11.9000
+    sw_lng: 79.7800
+    zoom: 13
+
+  - id: calangute
+    name: Calangute, Goa
+    state: Goa
+    regulation: Moderate
+    ne_lat: 15.5550
+    ne_lng: 73.7700
+    sw_lat: 15.5300
+    sw_lng: 73.7400
+    zoom: 14
+
+  - id: rishikesh
+    name: Rishikesh, Uttarakhand
+    state: Uttarakhand
+    regulation: Low
+    ne_lat: 30.1500
+    ne_lng: 78.3500
+    sw_lat: 30.0500
+    sw_lng: 78.2500
+    zoom: 13
+
+  - id: pune_city
+    name: Pune City, Maharashtra
+    state: Maharashtra
+    regulation: Low
+    ne_lat: 18.5800
+    ne_lng: 73.9200
+    sw_lat: 18.4500
+    sw_lng: 73.7800
+    zoom: 12

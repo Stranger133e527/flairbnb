@@ -1,0 +1,36 @@
+# India demand / seasonality overlay events (P1 wedge)
+events:
+  - id: holid_2026
+    name: Holi
+    start: "2026-03-03"
+    end: "2026-03-04"
+    demand: high
+    markets: [all]
+
+  - id: diwali_2026
+    name: Diwali
+    start: "2026-11-08"
+    end: "2026-11-12"
+    demand: high
+    markets: [all]
+
+  - id: goa_peak_season
+    name: Goa peak season
+    start: "2026-11-01"
+    end: "2027-02-28"
+    demand: high
+    markets: [candolim, calangute]
+
+  - id: monsoon_trough
+    name: Southwest monsoon trough
+    start: "2026-06-15"
+    end: "2026-09-15"
+    demand: low
+    markets: [mumbai, goa, candolim, calangute, puducherry, chennai]
+
+  - id: ipl_window
+    name: IPL season (approx)
+    start: "2026-03-20"
+    end: "2026-05-31"
+    demand: high
+    markets: [mumbai, bengaluru, chennai, hyderabad, kolkata, new_delhi, jaipur, pune, pune_city]
